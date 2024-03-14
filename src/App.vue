@@ -11,9 +11,11 @@
           <input class="form-control" type="text" id="inputField" @keyup.enter="callComboAPI()" v-model="newWord">
           <br>  -->
           <div class="wordBank">
-            <input class="form-control wordBankSearch" type="text" placeholder="Everything Search" v-model="bankSearch">
-            <div v-for="word in filteredWordBank" :key="word.id" class="word-item">
-              <div class="wordBankItem" @click="wordBankClicked(word.id)"> {{ word.id }} {{word.emoji}} </div>
+            <input class="form-control wordBankSearch" type="text" placeholder="Search Everything" v-model="bankSearch">
+            <div class="wordBankItems">
+              <div v-for="word in filteredWordBank" :key="word.id" class="word-item">
+                <div class="wordBankItem" tabindex="0" @click="wordBankClicked($event,word.id)"> {{ word.id }} {{word.emoji}} </div>
+              </div>
             </div>
           </div>
         </div>
@@ -53,9 +55,11 @@ export default {
   },
   data() {
     return {
+      url :"https://the-everything-map.onrender.com",//https://the-everything-map.onrender.com
       newWord: "",
       response: "",
       currentNode: "everything",
+      wordBankFocus: null,
       wordBank:[],
       bankSearch:"",
       thinkInterval: null,
@@ -71,11 +75,11 @@ export default {
         nodes: {
           color: {
             hover: {
-              border: '#4294d6', // Hover border color
-              background: '#c4e5ff' // Hover background color
+              border: '#4294d6',
+              background: '#c4e5ff'
             },
             highlight: {
-              border: '#58c45c', // Highlight border color (when selected)
+              border: '#58c45c', 
               background: '#baffbc'
             },
             background: '#ffffff',
@@ -123,10 +127,10 @@ export default {
         return;
       }
       this.loading = true;
-      const url = "https://the-everything-map.onrender.com/api/combine?word1=" + this.currentNode + "&word2=" + this.newWord;
+      const url = this.url + "/api/combine?word1=" + this.currentNode + "&word2=" + this.newWord;
       axios.get(url, { timeout: 3500 }).then(response => {
         //console.log(response.data);
-        this.response = this.parseData(response.data);
+        this.response = this.parseData(response.data,this.currentNode);
         this.$refs.network.unselectAll();
         this.currentNode = null;
       }).catch(error => {
@@ -137,10 +141,14 @@ export default {
         audio.play();
       }).finally(() => {
         this.loading = false;
+        if(this.wordBankFocus != null){
+          this.wordBankFocus.blur();
+          this.wordBankFocus = null;
+        }
       });
     },
     callThoughtAPI(type) {
-      const url = "https://the-everything-map.onrender.com/api/thought";
+      const url = this.url + "/api/thought";
       axios.get(url, { timeout: 5000 }).then(response => {
         this.newWord = response.data.toLowerCase().trim();
         if(type == "manual")
@@ -151,13 +159,16 @@ export default {
         console.error(error);
       });
     },
-    wordBankClicked(clickedWord){
+    wordBankClicked(event,clickedWord){
       if(this.currentNode == null){
         this.currentNode = clickedWord;
         this.newWord = "everything";
       }
       else
         this.newWord = clickedWord;
+
+      this.wordBankFocus = event.target;
+      this.wordBankFocus.focus();
       this.callComboAPI();
     },
     think() {
@@ -188,7 +199,9 @@ export default {
         if (!this.nodes.some(node => node.id === el.word)) {
           this.nodes.push({
             label: el.emoji + " " + el.word ,
-            id: el.word
+            id: el.word,
+            x:this.nodeXY(this.currentNode).x + (Math.random() - 0.5) * 100,
+            y:this.nodeXY(this.currentNode).y + (Math.random() - 0.5) * 100
           });
           this.wordBank.push({
             id: el.word,
@@ -216,8 +229,11 @@ export default {
         audio.volume = 0.2;
         audio.play();
       }
-      
         
+    },
+    nodeXY(nodeToFind){
+      var allNodes = this.$refs.network.getPositions();
+      return allNodes[nodeToFind];
     },
     containsEmoji(text) {
       const emojiRegex = /[\p{Emoji}]/gu;
@@ -278,13 +294,16 @@ export default {
   background-color: rgb(250, 251, 253);
   height:calc(100vh - 30px);
   border-radius: 4px;
-  overflow-y: auto;
   direction: rtl;
   margin-top: 15px;
   -webkit-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
   -moz-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
   box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
   padding:5px;
+}
+.wordBankItems{
+  overflow-y: auto;
+  height:calc(100vh - 88px);
 }
 .wordBankItem{
   padding: 4px;
@@ -297,9 +316,16 @@ export default {
   -webkit-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
   -moz-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
   box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  user-select: none;
+  font-size:16px;
 }
 .wordBankItem:hover{
-  background-color: rgb(236, 236, 236);
+  border-color: #4294d6;
+  background-color: #c4e5ff;
+}
+.wordBankItem:focus{
+  border-color: #58c45c;
+  background-color: #baffbc;
 }
 .wordBankSearch{
   direction: ltr;
