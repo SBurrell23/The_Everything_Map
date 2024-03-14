@@ -1,15 +1,19 @@
 <template>
   <div class="main"> 
+    <div id="logo">
+      The Everything Map
+    </div>
     <div class="row m-0">
       
       <div class="col-2">
         <div>
-          <br>
+          <!-- <br>
           <input class="form-control" type="text" id="inputField" @keyup.enter="callComboAPI()" v-model="newWord">
-          <br>
+          <br> -->
           <div class="wordBank">
-            <div v-for="word in wordBank" :key="word.id" class="word-item">
-              <div class="wordBankItem" @click="newWord=word.id;callComboAPI();"> {{ word.id }} {{word.emoji}} </div>
+            <input class="form-control wordBankSearch" type="text" placeholder="Everything Search" v-model="bankSearch">
+            <div v-for="word in filteredWordBank" :key="word.id" class="word-item">
+              <div class="wordBankItem" @click="wordBankClicked(word.id)"> {{ word.id }} {{word.emoji}} </div>
             </div>
           </div>
         </div>
@@ -18,7 +22,7 @@
       <div class="col-10" style="padding-left: 0px;">
         <network 
         ref="network"
-        class="network" 
+        id="network" 
         :nodes="nodes" 
         :edges="edges" 
         :options="options"
@@ -42,20 +46,41 @@ export default {
   props: {
     msg: String
   }, 
+  computed: {
+    filteredWordBank(){
+      return this.wordBank.filter(word => word.id.includes(this.bankSearch));
+    }
+  },
   data() {
     return {
       newWord: "",
       response: "",
-      currentNode: "nothing",
+      currentNode: "everything",
       wordBank:[],
+      bankSearch:"",
       thinkInterval: null,
+      loading: false,
       nodes: [
-        { id: "nothing", label: "🌌 nothing" }
+        { id: "everything", label: "♾️ everything" }
       ],
       edges: [],
       options: {
+        interaction: {
+          hover: true,
+        },
         nodes: {
-          color: '#ffffff',
+          color: {
+            hover: {
+              border: '#4294d6', // Hover border color
+              background: '#c4e5ff' // Hover background color
+            },
+            highlight: {
+              border: '#58c45c', // Highlight border color (when selected)
+              background: '#baffbc'
+            },
+            background: '#ffffff',
+            border: '#d7d7d7',
+          },
           shape: 'box',
           font:{
             size:20
@@ -93,15 +118,25 @@ export default {
   },
   methods: {
     callComboAPI() {
+      if(this.loading){
+        this.$refs.network.unselectAll();
+        return;
+      }
+      this.loading = true;
       const url = "http://localhost:8080/api/combine?word1=" + this.currentNode + "&word2=" + this.newWord;
-      axios.get(url, { timeout: 5500 }).then(response => {
-        console.log(response.data);
+      axios.get(url, { timeout: 3500 }).then(response => {
+        //console.log(response.data);
         this.response = this.parseData(response.data);
         this.$refs.network.unselectAll();
         this.currentNode = null;
       }).catch(error => {
         console.error(error);
         clearInterval(this.thinkInterval);
+        const audio = new Audio(require('@/assets/failure.mp3'));
+        audio.volume = 0.2;
+        audio.play();
+      }).finally(() => {
+        this.loading = false;
       });
     },
     callThoughtAPI(type) {
@@ -115,6 +150,15 @@ export default {
       }).catch(error => {
         console.error(error);
       });
+    },
+    wordBankClicked(clickedWord){
+      if(this.currentNode == null){
+        this.currentNode = clickedWord;
+        this.newWord = "everything";
+      }
+      else
+        this.newWord = clickedWord;
+      this.callComboAPI();
     },
     think() {
       this.callComboAPI();
@@ -134,10 +178,11 @@ export default {
         const [word, emoji] = el.split(":");
         return {word, emoji};
       });
+      var addedNodes = 0;
       for (let i = 0; i < objectsArray.length; i++) 
       {
         const el = objectsArray[i];
-        el.word = el.word.toLowerCase().trim();
+        el.word = el.word.toLowerCase().trim().replace(/['"]+/g, '');
         if(this.containsEmoji(el.emoji) == false || el.word.includes("undefined") || el.emoji.includes("undefined"))
           continue;
         if (!this.nodes.some(node => node.id === el.word)) {
@@ -149,6 +194,7 @@ export default {
             id: el.word,
             emoji: el.emoji
           });
+          addedNodes++;
         }
         const edgeExists = this.edges.some(edge => 
           (edge.from === this.currentNode && edge.to === el.word) ||
@@ -160,16 +206,26 @@ export default {
         if (!edgeExists) {
           this.edges.push({from: this.currentNode, to: el.word , label: this.newWord.toLowerCase().trim()});
         }
-
       }
+      if(addedNodes > 0){
+        const audio = new Audio(require('@/assets/success.mp3'));
+        audio.volume = 0.25;
+        audio.play();
+      }else{
+        const audio = new Audio(require('@/assets/failure.mp3'));
+        audio.volume = 0.2;
+        audio.play();
+      }
+      
+        
     },
     containsEmoji(text) {
       const emojiRegex = /[\p{Emoji}]/gu;
       return emojiRegex.test(text);
     },
     nodeSelected(event) {
-      console.log('Selected node:', event.nodes[0]);
-      if(this.currentNode == "nothing" && this.edges.length == 0)
+      //console.log('Selected node:', event.nodes[0]);
+      if(this.currentNode == "everything" && this.edges.length == 0)
         this.callThoughtAPI("manual");
       else if(this.currentNode == event.nodes[0]){
         return;
@@ -182,13 +238,22 @@ export default {
         this.$refs.network.selectNodes([this.newWord, this.currentNode]);
         this.callComboAPI();
       }
-      
     },
       
   },
   mounted() {
+    this.$refs.network.on("hoverNode", function () {
+      document.getElementById('network').style.cursor = 'pointer';
+    });
+    this.$refs.network.on("blurNode", function () {
+      document.getElementById('network').style.cursor = 'default';
+    });
+    this.$refs.network.on("deselectNode", (params) => {
+      if(params.nodes.length == 0) //Clicked on empty space, reset current node
+        this.currentNode = null;
+    });
     clearInterval(this.thinkInterval);
-    this.callThoughtAPI('ai');
+    // this.callThoughtAPI('ai');
   },
   unmounted() {
     clearInterval(this.thinkInterval);
@@ -198,25 +263,56 @@ export default {
 
 
 <style scoped>
-.network {
-  height: calc(100vh - 20px);  /* or any other value */
+#network {
+  height: calc(100vh - 30px);  /* or any other value */
+  margin-top:15px;
+  border:solid 1px rgb(224, 224, 224);
+  border-radius: 4px;
+  -webkit-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  -moz-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
 }
+
 .wordBank{
-  border:solid 1px rgb(185, 185, 185);
-  height:calc(100vh - 100px);
+  border:solid 1px rgb(224, 224, 224);
+  background-color: rgb(250, 251, 253);
+  height:calc(100vh - 30px);
   border-radius: 4px;
   overflow-y: auto;
   direction: rtl;
+  margin-top: 15px;
+  -webkit-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  -moz-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  padding:5px;
 }
 .wordBankItem{
   padding: 4px;
-  border: solid 1px rgb(185, 185, 185);
+  border: solid 1px rgb(213, 213, 213);
+  background-color: white;
   cursor: pointer;
   border-radius: 4px;
   margin:3px;
   float:left;
+  -webkit-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  -moz-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
+  box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
 }
 .wordBankItem:hover{
   background-color: rgb(236, 236, 236);
+}
+.wordBankSearch{
+  direction: ltr;
+  margin-bottom:5px;
+  margin-top:2px;
+}
+@import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light');
+
+#logo{
+  position: absolute;
+  top: 20px;
+  right:30px;
+  font-family: 'Shadows Into Light', sans-serif;
+  font-size: 35px;
 }
 </style>

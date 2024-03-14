@@ -21,6 +21,7 @@ const server = http.createServer((req, res) => {
 });
 
 async function callCombineAI(req, res, word1, word2) {
+    console.log("Input words: " + word1 + " " + word2);
     const completion = await openai.chat.completions.create({
         messages: [
             {
@@ -31,13 +32,14 @@ async function callCombineAI(req, res, word1, word2) {
                 role: "system",
                 content:`
                 We are playing a game.
-                I will give you two words (split by a colon) and you give exactly three words back.
-                The words you return should be something that a human would understand as what they would get if the two given words were combined.
-                The words should contain pop culture references if it makes sense to do so.
+                I will give you two words (split by a colon) and you give exactly 4 words back.
+                The words you return should be the top 3 words that most closely relate if you were to combine the two words I give you.
+                At least two of the words should contain a pop culture references if it would make logical sense.
                 Things like names of famous people/actors/actresses/movies/places/countries/types of food etc.
                 Make sure the words are specific and fun.
-                Include an appriopriate emoji for each word you find. Make sure the output is returned exactly like this every time:
-                word: emoji, word: emoji, word: emoji
+                Include an appriopriate emoji for each word you find. 
+                Make sure the output is returned exactly like this every time (INCLUDING THE COLON!):
+                word : emoji,word : emoji,word : emoji,word : emoji
                 `
             },
             { role: "user", content: word1+":"+word2},
@@ -51,13 +53,16 @@ async function callCombineAI(req, res, word1, word2) {
 
 
 async function callThoughtAI(req, res) {
+    const alphabet = Array.from({ length: 22 }, (_, i) => String.fromCharCode(97 + i));
+    const randomLetter1 = alphabet[Math.floor(Math.random() * alphabet.length)];
+    const randomLetter2 = alphabet[Math.floor(Math.random() * alphabet.length)];
     const completion = await openai.chat.completions.create({
         messages: [
             {
                 role: "system",
-                content:`I want you to pick a random word/pro-noun and give it to me.
-                It can be an object, a name of a movie, person, tv show, verb, adjective, book, actor or actress, literally anything at all. 
-                You response should be the word and thats it. Nothing else.
+                content:`I want you to pick a random word that starts with the letter ${randomLetter1} and ends with the letter ${randomLetter2}.
+                It must be a real world. If you can't think of one, just pick a random word that starts with the letter ${randomLetter1}.
+                You response should be the single word and thats it!!! Nothing else. 
                 `
             },
             { role: "user", content: ""},
