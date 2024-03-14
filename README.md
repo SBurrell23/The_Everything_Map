@@ -20,4 +20,3 @@ npm run build
 ### Deploys to gh pages
 ```
 npm run deploy
-
