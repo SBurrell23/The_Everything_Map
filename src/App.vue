@@ -60,7 +60,7 @@ export default {
       response: "",
       currentNode: "everything",
       wordBankFocus: null,
-      wordBank:[],
+      wordBank:[], 
       bankSearch:"",
       thinkInterval: null,
       loading: false,
