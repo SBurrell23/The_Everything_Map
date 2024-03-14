@@ -123,7 +123,7 @@ export default {
         return;
       }
       this.loading = true;
-      const url = "http://localhost:8080/api/combine?word1=" + this.currentNode + "&word2=" + this.newWord;
+      const url = "https://the-everything-map.onrender.com/api/combine?word1=" + this.currentNode + "&word2=" + this.newWord;
       axios.get(url, { timeout: 3500 }).then(response => {
         //console.log(response.data);
         this.response = this.parseData(response.data);
@@ -140,7 +140,7 @@ export default {
       });
     },
     callThoughtAPI(type) {
-      const url = "http://localhost:8080/api/thought";
+      const url = "https://the-everything-map.onrender.com/api/thought";
       axios.get(url, { timeout: 5000 }).then(response => {
         this.newWord = response.data.toLowerCase().trim();
         if(type == "manual")
