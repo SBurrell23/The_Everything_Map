@@ -1,4 +1,4 @@
-# aigame
+# The Everything Map
 
 ## Project setup
 ```
@@ -15,10 +15,7 @@ npm run serve
 npm run build
 ```
 
-### Lints and fixes files
+### Deploys to gh pages
 ```
-npm run lint
-```
+npm run deploy
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

@@ -167,7 +167,7 @@ export default {
       else
         this.newWord = clickedWord;
 
-      this.wordBankFocus = event.target;
+      this.wordBankFocus = event.target; 
       this.wordBankFocus.focus();
       this.callComboAPI();
     },
