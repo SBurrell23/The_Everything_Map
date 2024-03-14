@@ -21,7 +21,7 @@ const server = http.createServer((req, res) => {
 });
 
 async function callCombineAI(req, res, word1, word2) {
-    console.log("Input words: " + word1 + " " + word2);
+    console.log("Input words: " + word1 + " : " + word2);
     const completion = await openai.chat.completions.create({
         messages: [
             {
@@ -46,9 +46,15 @@ async function callCombineAI(req, res, word1, word2) {
         ],
         model: "gpt-3.5-turbo-0125"
     });
-    console.log(completion.choices[0].message.content);
-    res.statusCode = 200;
-    res.end(JSON.stringify(completion.choices[0].message.content));
+    
+    if (!completion.choices[0].message.content.includes(":")) {
+        console.log("INVALID RESPONSE! "+completion.choices[0].message.content+" Trying again...");
+        callCombineAI(req, res, word1, word2);
+    } else {
+        console.log(completion.choices[0].message.content);
+        res.statusCode = 200;
+        res.end(JSON.stringify(completion.choices[0].message.content));
+    }
 }
 
 

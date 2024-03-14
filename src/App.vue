@@ -3,6 +3,9 @@
     <div id="logo">
       The Everything Map
     </div>
+    <div id="numNodes" v-if="nodes.length > 1">
+      {{nodes.length - 1}} things found
+    </div>
     <div class="row m-0">
       
       <div class="col-2">
@@ -11,7 +14,7 @@
           <input class="form-control" type="text" id="inputField" @keyup.enter="callComboAPI()" v-model="newWord">
           <br>  -->
           <div class="wordBank">
-            <input class="form-control wordBankSearch" type="text" placeholder="Search Everything" v-model="bankSearch">
+            <input class="form-control wordBankSearch" type="text" placeholder="🔎 Search Everything" v-model="bankSearch">
             <div class="wordBankItems">
               <div v-for="word in filteredWordBank" :key="word.id" class="word-item">
                 <div class="wordBankItem" tabindex="0" @click="wordBankClicked($event,word.id)"> {{ word.id }} {{word.emoji}} </div>
@@ -86,6 +89,13 @@ export default {
             border: '#d7d7d7',
           },
           shape: 'box',
+          shadow:{
+            enabled: true,
+            color: 'rgba(0,0,0,0.2)',
+            size:12,
+            x:3,
+            y:3
+          },
           font:{
             size:20
           }
@@ -96,7 +106,8 @@ export default {
             background: '#ffffff',
             color: '#343434',
           },
-          dashes: true
+          dashes: true,
+          shadow:false
         },
         physics:{
           enabled: true,
@@ -135,8 +146,8 @@ export default {
         this.currentNode = null;
       }).catch(error => {
         console.error(error);
-        clearInterval(this.thinkInterval);
-        const audio = new Audio(require('@/assets/failure.mp3'));
+        //clearInterval(this.thinkInterval);
+        const audio = new Audio(require('@/assets/wrong.mp3'));
         audio.volume = 0.2;
         audio.play();
       }).finally(() => {
@@ -225,7 +236,7 @@ export default {
         audio.volume = 0.25;
         audio.play();
       }else{
-        const audio = new Audio(require('@/assets/failure.mp3'));
+        const audio = new Audio(require('@/assets/wrong.mp3'));
         audio.volume = 0.2;
         audio.play();
       }
@@ -255,9 +266,59 @@ export default {
         this.callComboAPI();
       }
     },
-      
+    createFloatingDots() {
+      const numDots = 150; // Number of dots to create
+      const networkElement = document.getElementById('network');
+      const shadesOfGray = ['#DEDEDE', '#EBECF1', '#ECECEC'];
+      const speed = 0.015; // Speed of the dots in pixels per millisecond
+
+      // Set the network element's position to relative
+      networkElement.style.position = 'relative';
+
+      // Create the dots
+      for (let i = 0; i < numDots; i++) {
+        const dot = document.createElement('div');
+        dot.style.zIndex = '-1';
+        dot.style.position = 'absolute';
+        dot.style.backgroundColor = shadesOfGray[Math.floor(Math.random() * shadesOfGray.length)]; 
+        dot.style.borderRadius = '50%';
+        dot.style.width = '3px';
+        dot.style.height = '3px';
+        dot.style.left = `${Math.random() * networkElement.offsetWidth}px`;
+        dot.style.top = `${Math.random() * networkElement.offsetHeight}px`;
+        dot.style.transition = 'all 30s ease-in-out';
+        networkElement.appendChild(dot);
+
+        const newX = Math.random() * networkElement.offsetWidth;
+        const newY = Math.random() * networkElement.offsetHeight;
+        const dx = newX - parseFloat(dot.style.left);
+        const dy = newY - parseFloat(dot.style.top);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const duration = distance / speed;
+
+        dot.style.transition = `all ${duration}ms linear`;
+        dot.style.left = `${newX}px`;
+        dot.style.top = `${newY}px`;
+
+        setInterval(() => {
+          const newX = Math.random() * networkElement.offsetWidth;
+          const newY = Math.random() * networkElement.offsetHeight;
+          const dx = newX - parseFloat(dot.style.left);
+          const dy = newY - parseFloat(dot.style.top);
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const duration = distance / speed;
+
+          dot.style.transition = `all ${duration}ms linear`;
+          dot.style.left = `${newX}px`;
+          dot.style.top = `${newY}px`;
+        }, 60000);
+      }
+
+    }
   },
   mounted() {
+    //this.createFloatingDots();
+
     this.$refs.network.on("hoverNode", function () {
       document.getElementById('network').style.cursor = 'pointer';
     });
@@ -269,7 +330,7 @@ export default {
         this.currentNode = null;
     });
     clearInterval(this.thinkInterval);
-    // this.callThoughtAPI('ai');
+    //this.callThoughtAPI('ai');
   },
   unmounted() {
     clearInterval(this.thinkInterval);
@@ -288,7 +349,6 @@ export default {
   -moz-box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
   box-shadow: -4px 6px 20px -15px rgba(0,0,0,0.75);
 }
-
 .wordBank{
   border:solid 1px rgb(224, 224, 224);
   background-color: rgb(250, 251, 253);
@@ -340,5 +400,14 @@ export default {
   right:30px;
   font-family: 'Shadows Into Light', sans-serif;
   font-size: 35px;
+}
+
+#numNodes{
+  position: absolute;
+  bottom: 23px;
+  right:30px;
+  font-family: 'Shadows Into Light', sans-serif;
+  font-size: 25px;
+  color: rgb(149, 149, 149);
 }
 </style>
