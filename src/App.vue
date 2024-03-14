@@ -9,7 +9,7 @@
         <div>
           <!-- <br>
           <input class="form-control" type="text" id="inputField" @keyup.enter="callComboAPI()" v-model="newWord">
-          <br> -->
+          <br>  -->
           <div class="wordBank">
             <input class="form-control wordBankSearch" type="text" placeholder="Everything Search" v-model="bankSearch">
             <div v-for="word in filteredWordBank" :key="word.id" class="word-item">
