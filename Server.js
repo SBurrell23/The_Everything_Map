@@ -13,15 +13,15 @@ const server = http.createServer((req, res) => {
 
     // Handle different routes
     if (parsedUrl.pathname === '/api/combine')
-        callCombineAI(req, res, parsedUrl.query.word1, parsedUrl.query.word2);
+        callCombineAI(req, res, parsedUrl.query.word1, parsedUrl.query.word2, parsedUrl.query.theme);
     else if (parsedUrl.pathname === '/api/thought')
          callThoughtAI(req, res);
     else 
         handleUnknownRoute(req, res);
 });
 
-async function callCombineAI(req, res, word1, word2) {
-    console.log("Input words: " + word1 + " : " + word2);
+async function callCombineAI(req, res, word1, word2,theme) {
+    console.log("Input words: " + word1 + " : " + word2 + " / Theme:" + theme);
     const completion = await openai.chat.completions.create({
         messages: [
             {
@@ -66,8 +66,8 @@ async function callThoughtAI(req, res) {
         messages: [
             {
                 role: "system",
-                content:`I want you to pick a random word that starts with the letter ${randomLetter1} and ends with the letter ${randomLetter2}.
-                It must be a real world. If you can't think of one, just pick a random word that starts with the letter ${randomLetter1}.
+                content:`I want you to pick a random word that starts with the letter ${randomLetter1} and also contains the letter ${randomLetter2}.
+                It must be a real world.
                 You response should be the single word and thats it!!! Nothing else. 
                 `
             },

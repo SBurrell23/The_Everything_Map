@@ -168,6 +168,10 @@ export default {
           this.think();
       }).catch(error => {
         console.error(error);
+        const audio = new Audio(require('@/assets/wrong.mp3'));
+        audio.volume = 0.2;
+        audio.play();
+        this.$refs.network.unselectAll();
       });
     },
     wordBankClicked(event,clickedWord){
@@ -210,9 +214,9 @@ export default {
         if (!this.nodes.some(node => node.id === el.word)) {
           this.nodes.push({
             label: el.emoji + " " + el.word ,
-            id: el.word,
-            x:this.nodeXY(this.currentNode).x + (Math.random() - 0.5) * 100,
-            y:this.nodeXY(this.currentNode).y + (Math.random() - 0.5) * 100
+            id: el.word
+            // x:this.nodeXY(this.currentNode).x + (Math.random() - 0.5) * 100,
+            // y:this.nodeXY(this.currentNode).y + (Math.random() - 0.5) * 100
           });
           this.wordBank.push({
             id: el.word,
