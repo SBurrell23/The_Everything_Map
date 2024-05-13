@@ -134,28 +134,31 @@ export default {
   methods: {
     callComboAPI() {
       if(this.loading){
-        this.$refs.network.unselectAll();
-        return;
+      this.$refs.network.unselectAll();
+      return;
       }
       this.loading = true;
       const url = this.url + "/api/combine?word1=" + this.currentNode + "&word2=" + this.newWord;
       axios.get(url, { timeout: 3500 }).then(response => {
-        //console.log(response.data);
-        this.response = this.parseData(response.data,this.currentNode);
-        this.$refs.network.unselectAll();
-        this.currentNode = null;
+      //console.log(response.data);
+      this.response = this.parseData(response.data,this.currentNode);
+      this.$refs.network.unselectAll();
+      this.currentNode = null;
       }).catch(error => {
-        console.error(error);
-        //clearInterval(this.thinkInterval);
+      console.error(error);
+      if (error.response && error.response.status === 429) {
+        alert("You've made too many requests. Please try again at a later date.");
+      } else {
         const audio = new Audio(require('@/assets/wrong.mp3'));
         audio.volume = 0.2;
         audio.play();
+      }
       }).finally(() => {
-        this.loading = false;
-        if(this.wordBankFocus != null){
-          this.wordBankFocus.blur();
-          this.wordBankFocus = null;
-        }
+      this.loading = false;
+      if(this.wordBankFocus != null){
+        this.wordBankFocus.blur();
+        this.wordBankFocus = null;
+      }
       });
     },
     callThoughtAPI(type) {

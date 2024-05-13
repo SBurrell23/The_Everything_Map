@@ -1,7 +1,9 @@
 const http = require('http');
 const url = require('url');
 const OpenAI = require('openai');
+const { exit } = require('process');
 const openai = new OpenAI({ apiKey: process.argv[2] });
+const ipRequestCounts = new Map(); 
 
 const server = http.createServer((req, res) => {
     // Set response headers
@@ -20,7 +22,23 @@ const server = http.createServer((req, res) => {
         handleUnknownRoute(req, res);
 });
 
+// Request cap of 500 requests per user
+function checkRequestCount(req,res) {
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const count = (ipRequestCounts.get(ip) || 0) + 1;
+    ipRequestCounts.set(ip, count);
+    if (count > 500) {
+        res.statusCode = 429;
+        res.end('Too many requests');
+        return true;
+      }
+    return false;
+}
+
 async function callCombineAI(req, res, word1, word2,theme) {
+    var overLimit = checkRequestCount(req,res);
+    if(overLimit) 
+        return;
     console.log("Input words: " + word1 + " : " + word2 + " / Theme:" + theme);
     const completion = await openai.chat.completions.create({
         messages: [
