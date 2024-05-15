@@ -8,23 +8,20 @@
     </div>
     <div class="row m-0">
       
-      <div class="col-2">
+      <div class="col-2" style="padding-right:0px;" v-if="!isSmallScreen">
         <div>
-          <!-- <br>
-          <input class="form-control" type="text" id="inputField" @keyup.enter="callComboAPI()" v-model="newWord">
-          <br>  -->
           <div class="wordBank">
-            <input class="form-control wordBankSearch" type="text" placeholder="🔎 Search Everything" v-model="bankSearch">
-            <div class="wordBankItems">
-              <div v-for="word in filteredWordBank" :key="word.id" class="word-item">
-                <div class="wordBankItem" tabindex="0" @click="wordBankClicked($event,word.id)"> {{ word.id }} {{word.emoji}} </div>
-              </div>
-            </div>
+        <input class="form-control wordBankSearch" type="text" placeholder="🔎 Search Everything" v-model="bankSearch">
+        <div class="wordBankItems">
+          <div v-for="word in filteredWordBank" :key="word.id" class="word-item">
+            <div class="wordBankItem" tabindex="0" @click="wordBankClicked($event,word.id)"> {{ word.id }} {{word.emoji}} </div>
+          </div>
+        </div>
           </div>
         </div>
       </div>
 
-      <div class="col-10" style="padding-left: 0px;">
+      <div class="col-10" :class="{'col-12': isSmallScreen}">
         <network 
         ref="network"
         id="network" 
@@ -58,7 +55,7 @@ export default {
   },
   data() {
     return {
-      url :"https://the-everything-map.onrender.com",//https://the-everything-map.onrender.com
+      url :"http://localhost:8080",//https://the-everything-map.onrender.com
       newWord: "",
       response: "",
       currentNode: "everything",
@@ -67,6 +64,7 @@ export default {
       bankSearch:"",
       thinkInterval: null,
       loading: false,
+      isSmallScreen: window.innerWidth < 800,
       nodes: [
         { id: "everything", label: "♾️ everything" }
       ],
@@ -139,7 +137,7 @@ export default {
       }
       this.loading = true;
       const url = this.url + "/api/combine?word1=" + this.currentNode + "&word2=" + this.newWord;
-      axios.get(url, { timeout: 3500 }).then(response => {
+      axios.get(url, { timeout: 4500 }).then(response => {
       //console.log(response.data);
       this.response = this.parseData(response.data,this.currentNode);
       this.$refs.network.unselectAll();
@@ -163,7 +161,7 @@ export default {
     },
     callThoughtAPI(type) {
       const url = this.url + "/api/thought";
-      axios.get(url, { timeout: 5000 }).then(response => {
+      axios.get(url, { timeout: 6000 }).then(response => {
         this.newWord = response.data.toLowerCase().trim();
         if(type == "manual")
           this.callComboAPI();
@@ -321,11 +319,14 @@ export default {
         }, 60000);
       }
 
-    }
+    },    
+    checkScreenSize() {
+      this.isSmallScreen = window.innerWidth < 800;
+    },
   },
   mounted() {
     //this.createFloatingDots();
-
+    window.addEventListener('resize', this.checkScreenSize);
     this.$refs.network.on("hoverNode", function () {
       document.getElementById('network').style.cursor = 'pointer';
     });
@@ -338,6 +339,9 @@ export default {
     });
     clearInterval(this.thinkInterval);
     //this.callThoughtAPI('ai');
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.checkScreenSize);
   },
   unmounted() {
     clearInterval(this.thinkInterval);
@@ -417,4 +421,5 @@ export default {
   font-size: 25px;
   color: rgb(149, 149, 149);
 }
+
 </style>

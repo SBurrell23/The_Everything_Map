@@ -51,7 +51,7 @@ async function callCombineAI(req, res, word1, word2,theme) {
                 content:`
                 We are playing a game.
                 I will give you two words (split by a colon) and you give exactly 4 words back.
-                The words you return should be the top 3 words that most closely relate if you were to combine the two words I give you.
+                The words you return should be the top 4 words that most closely relate if you were to combine the two words I give you.
                 At least two of the words should contain a pop culture references if it would make logical sense.
                 Things like names of famous people/actors/actresses/movies/places/countries/types of food etc.
                 Make sure the words are specific and fun.
@@ -62,7 +62,7 @@ async function callCombineAI(req, res, word1, word2,theme) {
             },
             { role: "user", content: word1+":"+word2},
         ],
-        model: "gpt-3.5-turbo-0125"
+        model: "gpt-4o"
     });
     
     if (!completion.choices[0].message.content.includes(":")) {
@@ -91,7 +91,7 @@ async function callThoughtAI(req, res) {
             },
             { role: "user", content: ""},
         ],
-        model: "gpt-3.5-turbo-0125"
+        model: "gpt-4o"
     });
     console.log(completion.choices[0].message.content);
     res.statusCode = 200;
