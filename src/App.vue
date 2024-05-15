@@ -55,7 +55,7 @@ export default {
   },
   data() {
     return {
-      url :"http://localhost:8080",//https://the-everything-map.onrender.com
+      url :"https://the-everything-map.onrender.com",//https://the-everything-map.onrender.com
       newWord: "",
       response: "",
       currentNode: "everything",
