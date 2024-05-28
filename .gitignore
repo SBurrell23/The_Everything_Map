@@ -22,3 +22,4 @@ pnpm-debug.log*
 *.sln
 *.sw?
 api.key
+app.yaml
