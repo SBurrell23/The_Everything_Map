@@ -55,7 +55,7 @@ export default {
   },
   data() {
     return {
-      url :"https://the-everything-map-dot-steven-burrell-personal.wm.r.appspot.com",
+      url :"https://the-everything-map.onrender.com",
       newWord: "",
       response: "",
       currentNode: "everything",
